@@ -56,9 +56,9 @@ Conv1_1 = Conv2D(filters=32,kernel_size=(1,1),strides=(1,1),padding='valid',data
               activation='relu',kernel_initializer=tf.keras.initializers.he_normal(seed=0),name='Conv1')(input_layer)
 Conv2_1 = Conv2D(filters=32,kernel_size=(1,1),strides=(1,1),padding='valid',data_format='channels_last',
               activation='relu',kernel_initializer=tf.keras.initializers.he_normal(seed=0),name='Conv2')(Conv1_1)
-flat2 = Flatten()(Conv2_1)
-Out2 = Dense(units=10,activation='softmax',kernel_initializer=tf.keras.initializers.glorot_normal(seed=3),name='Output')(flat2)
-model1 = Model(inputs = vgg16_model.input, outputs = Out2)
+flat1 = Flatten()(Conv2_1)
+Out1 = Dense(units=10,activation='softmax',kernel_initializer=tf.keras.initializers.glorot_normal(seed=3),name='Output')(flat1)
+model1 = Model(inputs = vgg16_model.input, outputs = Out1)
 
 model1.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),loss='categorical_crossentropy',metrics=['accuracy'])
 
@@ -80,4 +80,17 @@ flat = Flatten()(Pool1)
 FC1 = Dense(units=30,activation='relu',kernel_initializer=tf.keras.initializers.glorot_normal(seed=32),name='FC1')(flat)
 FC2 = Dense(units=30,activation='relu',kernel_initializer=tf.keras.initializers.glorot_normal(seed=32),name='FC2')(FC1)
 Out = Dense(units=16,activation='softmax',kernel_initializer=tf.keras.initializers.glorot_normal(seed=3),name='Output')(FC2)
-model = Model(inputs = vgg16_model.input, outputs = Out)
+model2 = Model(inputs = vgg16_model.input, outputs = Out)
+
+
+model2.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),loss='categorical_crossentropy', metrics=['accuracy'])
+
+model2.fit(
+    train_generator,
+    steps_per_epoch = train_generator.samples // 32,
+    validation_data = validation_generator, 
+    validation_steps = validation_generator.samples // 32,
+    epochs = 5
+    )
+
+model2.save("./models/model2/model2.h5")
