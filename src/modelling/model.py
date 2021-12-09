@@ -6,15 +6,15 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.applications.vgg16 import VGG16
-from tensorflow.keras.layers import Dense,Input,Conv2D,MaxPool2D,Activation,Dropout,Flatten
+from tensorflow.keras.layers import Dense,Input,Conv2D,MaxPool2D,Activation,Dropout,Flatten, BatchNormalization
 from tensorflow.keras.models import Model, load_model
 from keras.callbacks import Callback
 from tensorflow.keras import Sequential
+from tensorflow.keras.optimizers import SGD
 import datetime
 import random as rn
 
 df = pd.read_csv("data/raw_data/driver_imgs_path.csv")
-print(df.head())
 
 tf.keras.backend.clear_session()
 
@@ -52,45 +52,35 @@ for layer in vgg16_model.layers:
 
 input_layer = vgg16_model.output
 
-Conv1_1 = Conv2D(filters=32,kernel_size=(1,1),strides=(1,1),padding='valid',data_format='channels_last',
+Conv1_1 = Conv2D(filters=32,kernel_size=(3,3),strides=(1,1),padding='valid',data_format='channels_last',
               activation='relu',kernel_initializer=tf.keras.initializers.he_normal(seed=0),name='Conv1')(input_layer)
-Conv2_1 = Conv2D(filters=32,kernel_size=(1,1),strides=(1,1),padding='valid',data_format='channels_last',
-              activation='relu',kernel_initializer=tf.keras.initializers.he_normal(seed=0),name='Conv2')(Conv1_1)
-flat1 = Flatten()(Conv2_1)
+Batch1_1 = BatchNormalization(axis = 3)(Conv1_1)
+Conv2_1 = Conv2D(filters=32,kernel_size=(3,3),strides=(1,1),padding='valid',data_format='channels_last',
+              activation='relu',kernel_initializer=tf.keras.initializers.he_normal(seed=0),name='Conv2')(Batch1_1)
+Batch2_1 = BatchNormalization(axis = 3)(Conv2_1)
+Pool1_1 = MaxPool2D(pool_size=(2,2),strides=(2,2),padding='valid',data_format='channels_last',name='Pool1')(Batch2_1)
+
+flat1 = Flatten()(Pool1_1)
 Out1 = Dense(units=10,activation='softmax',kernel_initializer=tf.keras.initializers.glorot_normal(seed=3),name='Output')(flat1)
 model1 = Model(inputs = vgg16_model.input, outputs = Out1)
 
-model1.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),loss='categorical_crossentropy',metrics=['accuracy'])
+
+learning_rate = 0.1
+epochs = 8
+decay_rate = learning_rate / epochs
+momentum = 0.8
+sgd = SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=False)
+
+model1.compile(optimizer=sgd,loss='categorical_crossentropy',metrics=['accuracy'])
+
+model1.summary()
 
 model1.fit(
     train_generator,
     steps_per_epoch = train_generator.samples // 32,
     validation_data = validation_generator, 
     validation_steps = validation_generator.samples // 32,
-    epochs = 5
+    epochs = epochs
     )
 
 model1.save("./models/model1/model1.h5")
-
-
-Conv1 = Conv2D(filters=32,kernel_size=(3,3),strides=(1,1),padding='valid',data_format='channels_last',
-              activation='relu',kernel_initializer=tf.keras.initializers.he_normal(seed=0),name='Conv1')(input_layer)
-Pool1 = MaxPool2D(pool_size=(2,2),strides=(2,2),padding='valid',data_format='channels_last',name='Pool1')(Conv1)
-flat = Flatten()(Pool1)
-FC1 = Dense(units=30,activation='relu',kernel_initializer=tf.keras.initializers.glorot_normal(seed=32),name='FC1')(flat)
-FC2 = Dense(units=30,activation='relu',kernel_initializer=tf.keras.initializers.glorot_normal(seed=32),name='FC2')(FC1)
-Out = Dense(units=16,activation='softmax',kernel_initializer=tf.keras.initializers.glorot_normal(seed=3),name='Output')(FC2)
-model2 = Model(inputs = vgg16_model.input, outputs = Out)
-
-
-model2.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),loss='categorical_crossentropy', metrics=['accuracy'])
-
-model2.fit(
-    train_generator,
-    steps_per_epoch = train_generator.samples // 32,
-    validation_data = validation_generator, 
-    validation_steps = validation_generator.samples // 32,
-    epochs = 5
-    )
-
-model2.save("./models/model2/model2.h5")
