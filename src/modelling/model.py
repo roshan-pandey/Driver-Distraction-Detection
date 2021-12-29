@@ -22,7 +22,7 @@ tf.keras.backend.clear_session()
 
 df = pd.read_csv("data/raw_data/driver_imgs_path.csv")
 
-# reading and Processing image... 
+# Reading and Processing image... 
 def img_process(df):
     data = []
     for i in tqdm(range(10)):
