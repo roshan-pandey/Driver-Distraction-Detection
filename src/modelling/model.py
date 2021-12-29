@@ -4,6 +4,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
 import cv2
+import glob
+from skimage.filters import sobel
+from sklearn import preprocessing
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.applications.vgg16 import VGG16
@@ -20,6 +23,7 @@ from tensorflow.keras.optimizers.schedules import ExponentialDecay
 
 tf.keras.backend.clear_session()
 
+#############################################################################################################################################################################################################
 df = pd.read_csv("data/raw_data/driver_imgs_path.csv")
 
 # Reading and Processing image... 
@@ -56,9 +60,51 @@ for i in data:
 
 X_train = np.array(X_train).reshape(-1,224,224,3)
 X_test = np.array(X_test).reshape(-1,224,224,3)
-y_train = to_categorical(y_train)
-y_test = to_categorical(y_test)
+y_train_cat = to_categorical(y_train)
+y_test_cat = to_categorical(y_test)
 
+le = preprocessing.LabelEncoder()
+le.fit(y_test)
+y_test_encoded = le.transform(y_test)
+le.fit(y_train)
+y_train_encoded = le.transform(y_train)
+
+# X_train = (X_train*1.0)/255.0
+# X_test = (X_test*1.0)/255.0
+
+def feature_extractor(dataset):
+    image_dataset = pd.DataFrame()
+    for image in tqdm(range(dataset.shape[0])):  
+        feat_df = pd.DataFrame()  
+        input_img = dataset[image, :,:,:]
+        pix_val = input_img.reshape(-1)
+        feat_df['Pixel_Value'] = pix_val  
+        counter = 1 
+        kernels = []
+        for theta in range(2):  
+            theta = theta / 4. * np.pi
+            for sigma in (1, 3):  
+                lamda = np.pi/4
+                gamma = 0.5
+                gabor_label = 'Gabor' + str(counter) 
+                kernel = cv2.getGaborKernel((9, 9), sigma, theta, lamda, gamma, 0, ktype=cv2.CV_32F)    
+                kernels.append(kernel)
+                fimg = cv2.filter2D(input_img, cv2.CV_8UC3, kernel)
+                fimg = fimg.reshape(-1)
+                feat_df[gabor_label] = fimg 
+                # print(gabor_label, ': theta=', theta, ': sigma=', sigma, ': lamda=', lamda, ': gamma=', gamma)
+                counter += 1  
+        edge_sobel = sobel(input_img)
+        edge_sobel1 = edge_sobel.reshape(-1)
+        feat_df['Sobel'] = edge_sobel1
+        image_dataset = image_dataset.append(feat_df)
+        
+    return image_dataset
+####################################################################
+#Extract features from training images
+image_features = feature_extractor(X_train)
+
+#############################################################################################################################################################################################################
 
 INPUT_SIZE = [224, 224]
 BATCH_SIZE = 64
@@ -98,7 +144,7 @@ model1.compile(loss='categorical_crossentropy', optimizer = opt, metrics=['accur
 
 # Source: https://keras.io/api/preprocessing/image/
 
-train_gen = ImageDataGenerator(rescale = 1./255,
+train_gen = ImageDataGenerator(
     shear_range=0.2,
     zoom_range=0.2,
     horizontal_flip=True,
@@ -107,7 +153,7 @@ train_gen = ImageDataGenerator(rescale = 1./255,
 
 train_generator = train_gen.flow(
     X_train,
-    y_train,
+    y_train_cat,
     batch_size=BATCH_SIZE
 )
 
@@ -119,7 +165,7 @@ model1_trained = model1.fit(
     steps_per_epoch = len(X_train) / BATCH_SIZE, 
     callbacks=callbacks1,
     epochs = 25, 
-    validation_data = (X_test, y_test))
+    validation_data = (X_test, y_test_cat))
 
 
 fig, axes = plt.subplots(1, 2, figsize = (10, 5))
@@ -149,8 +195,8 @@ BATCH_SIZE = 64
 
 X_train = np.array(X_train).reshape(-1,224,224,3)
 X_test = np.array(X_test).reshape(-1,224,224,3)
-y_train = to_categorical(y_train)
-y_test = to_categorical(y_test)
+y_train_cat = to_categorical(y_train)
+y_test_cat = to_categorical(y_test)
 
 
 train_gen = ImageDataGenerator(
@@ -163,7 +209,7 @@ train_gen = ImageDataGenerator(
 
 train_generator = train_gen.flow(
     X_train,
-    y_train,
+    y_train_cat,
     batch_size=BATCH_SIZE
 )
 
