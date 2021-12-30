@@ -102,7 +102,9 @@ def feature_extractor(dataset):
     return image_dataset
 ####################################################################
 #Extract features from training images
-image_features = feature_extractor(X_train)
+indx = np.random.choice(X_train.shape[0], size=6000, replace=False)
+X_train_subset = X_train[indx]
+image_features = feature_extractor(X_train_subset)
 
 #############################################################################################################################################################################################################
 
