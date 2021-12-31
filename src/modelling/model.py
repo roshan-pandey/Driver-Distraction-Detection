@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pickle
 import cv2
 import glob
+from sklearn import metrics
 from skimage.filters import sobel
 from sklearn import preprocessing
 import tensorflow as tf
@@ -20,6 +21,8 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.optimizers import SGD, Adam
 from tqdm import tqdm
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
+from sklearn.ensemble import RandomForestClassifier
+
 
 tf.keras.backend.clear_session()
 
@@ -58,16 +61,8 @@ for i in data:
         X_train.append(i[0])
         y_train.append(i[1])
 
-X_train = np.array(X_train).reshape(-1,224,224,3)
-X_test = np.array(X_test).reshape(-1,224,224,3)
-y_train_cat = to_categorical(y_train)
-y_test_cat = to_categorical(y_test)
-
-le = preprocessing.LabelEncoder()
-le.fit(y_test)
-y_test_encoded = le.transform(y_test)
-le.fit(y_train)
-y_train_encoded = le.transform(y_train)
+# X_train = np.array(X_train).reshape(-1,224,224,3)
+# X_test = np.array(X_test).reshape(-1,224,224,3)
 
 # X_train = (X_train*1.0)/255.0
 # X_test = (X_test*1.0)/255.0
@@ -92,7 +87,6 @@ def feature_extractor(dataset):
                 fimg = cv2.filter2D(input_img, cv2.CV_8UC3, kernel)
                 fimg = fimg.reshape(-1)
                 feat_df[gabor_label] = fimg 
-                # print(gabor_label, ': theta=', theta, ': sigma=', sigma, ': lamda=', lamda, ': gamma=', gamma)
                 counter += 1  
         edge_sobel = sobel(input_img)
         edge_sobel1 = edge_sobel.reshape(-1)
@@ -102,9 +96,63 @@ def feature_extractor(dataset):
     return image_dataset
 ####################################################################
 #Extract features from training images
-indx = np.random.choice(X_train.shape[0], size=6000, replace=False)
-X_train_subset = X_train[indx]
-image_features = feature_extractor(X_train_subset)
+# indx = np.random.choice(X_train.shape[0], size=4000, replace=False)
+
+# y_train_cat = to_categorical(y_train)
+y_test_cat = to_categorical(y_test)
+
+# X_train_subset = X_train[indx]
+# y_train_subset = y_train_cat[indx]
+
+# with open('./data/raw_data/X_train_4000.txt', 'wb') as f:
+#          pickle.dump(X_train_subset, f)
+
+# with open('./data/raw_data/y_train_4000.txt', 'wb') as f:
+#          pickle.dump(y_train_subset, f)
+
+# image_features = feature_extractor(X_train_subset)
+
+# with open('./data/raw_data/feature.txt', 'wb') as f:
+#          pickle.dump(image_features, f)
+
+image_features = pd.read_pickle(r'./data/raw_data/feature.txt')
+
+y_train = pd.read_pickle(r'./data/raw_data/y_train_4000.txt')
+
+
+# le.fit(y_train)
+# y_train_encoded = le.transform(y_train)
+
+
+image_features = np.expand_dims(image_features, axis=0)
+X_train_RF = np.reshape(image_features, (4000, -1))  #Reshape to #images, features
+
+RF_model = RandomForestClassifier(n_estimators = 50, random_state = 42)
+RF_model.fit(X_train_RF, y_train) 
+
+# with open('./models/model/model', 'wb') as f:
+#          pickle.dump(RF_model, f)
+
+model = pd.read_pickle("./models/model/model")
+
+
+test_indx = np.random.choice(X_test.shape[0], size=500, replace=False)
+X_test_subset = X_test[test_indx]
+y_test_subset = np.array(y_test)[test_indx]
+
+
+le = preprocessing.LabelEncoder()
+le.fit(y_test_subset)
+y_test_encoded = le.transform(y_test_subset)
+
+test_img_features = feature_extractor(X_test_subset)
+test_img_features = np.expand_dims(test_img_features, axis=0)
+X_test_RF = np.reshape(test_img_features, (X_test_subset.shape[0], -1))
+
+pred = model.predict(X_test_RF)
+# pred = le.inverse_transform(pred)
+
+print ("Accuracy = ", metrics.accuracy_score(y_test_cat[test_indx], pred))
 
 #############################################################################################################################################################################################################
 
