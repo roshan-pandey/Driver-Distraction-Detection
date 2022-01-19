@@ -61,17 +61,17 @@ for i in data:
         X_train.append(i[0])
         y_train.append(i[1])
 
-# X_train = np.array(X_train).reshape(-1,224,224,3)
-# X_test = np.array(X_test).reshape(-1,224,224,3)
+X_train = np.array(X_train).reshape(-1,224,224,3)
+X_test = np.array(X_test).reshape(-1,224,224,3)
 
 # X_train = (X_train*1.0)/255.0
 # X_test = (X_test*1.0)/255.0
 
 def feature_extractor(dataset):
     image_dataset = pd.DataFrame()
-    for image in tqdm(range(dataset.shape[0])):  
+    for image in tqdm(range(np.array(dataset).shape[0])):  
         feat_df = pd.DataFrame()  
-        input_img = dataset[image, :,:,:]
+        input_img = np.array(dataset)[image, :,:,:]
         pix_val = input_img.reshape(-1)
         feat_df['Pixel_Value'] = pix_val  
         counter = 1 
@@ -98,7 +98,7 @@ def feature_extractor(dataset):
 #Extract features from training images
 # indx = np.random.choice(X_train.shape[0], size=4000, replace=False)
 
-# y_train_cat = to_categorical(y_train)
+y_train_cat = to_categorical(y_train)
 y_test_cat = to_categorical(y_test)
 
 # X_train_subset = X_train[indx]
@@ -133,31 +133,23 @@ RF_model.fit(X_train_RF, y_train)
 # with open('./models/model/model', 'wb') as f:
 #          pickle.dump(RF_model, f)
 
-model = pd.read_pickle("./models/model/model")
+
+# test_indx = np.random.choice(np.array(X_test).shape[0], size=500, replace=False)
+# X_test_subset = [X_test[i] for i in test_indx]
+# y_test_subset = np.array(y_test)[test_indx]
+
+# with open('./data/raw_data/X_test.txt', 'wb') as f:
+#          pickle.dump(X_test_subset, f)
+
+# with open('./data/raw_data/y_test.txt', 'wb') as f:
+#          pickle.dump(y_test_subset, f)
 
 
-test_indx = np.random.choice(X_test.shape[0], size=500, replace=False)
-X_test_subset = X_test[test_indx]
-y_test_subset = np.array(y_test)[test_indx]
-
-
-le = preprocessing.LabelEncoder()
-le.fit(y_test_subset)
-y_test_encoded = le.transform(y_test_subset)
-
-test_img_features = feature_extractor(X_test_subset)
-test_img_features = np.expand_dims(test_img_features, axis=0)
-X_test_RF = np.reshape(test_img_features, (X_test_subset.shape[0], -1))
-
-pred = model.predict(X_test_RF)
-# pred = le.inverse_transform(pred)
-
-print ("Accuracy = ", metrics.accuracy_score(y_test_cat[test_indx], pred))
 
 #############################################################################################################################################################################################################
 
 INPUT_SIZE = [224, 224]
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 # Model from scratch... following vgg16 architecture...
 # Using keras sequential api...
@@ -165,28 +157,28 @@ model1 = Sequential()
 model1.add(Conv2D(32, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(32, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
-model1.add(Dropout(0.5))
+model1.add(Dropout(0.25))
 model1.add(Conv2D(64, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(64, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
-model1.add(Dropout(0.5))
+model1.add(Dropout(0.25))
 model1.add(Conv2D(128, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(128, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(128, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
-model1.add(Dropout(0.5))
+model1.add(Dropout(0.1))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
-model1.add(Dropout(0.5))
+model1.add(Dropout(0.25))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
 model1.add(Flatten())
-model1.add(Dense(64, activation = 'relu'))
-model1.add(Dense(64, activation='relu'))
+model1.add(Dense(64, activation = 'elu'))
+model1.add(Dense(64, activation='elu'))
 model1.add(Dense(10, activation='softmax'))
 opt = Adam(learning_rate = 0.001)
 model1.compile(loss='categorical_crossentropy', optimizer = opt, metrics=['accuracy'])
@@ -205,6 +197,15 @@ train_generator = train_gen.flow(
     X_train,
     y_train_cat,
     batch_size=BATCH_SIZE
+)
+
+test_datagen=ImageDataGenerator(rescale=1./255.)
+
+test_generator=test_datagen.flow(
+  X_test,
+  batch_size=32,
+  seed=42,
+  shuffle=False
 )
 
 checkpoint1 = ModelCheckpoint(filepath="./models/model1/model1.h5", verbose=2, save_best_only=True)
