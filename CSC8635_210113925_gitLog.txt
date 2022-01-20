@@ -1,0 +1,110 @@
+commit 648074c2f9e114312d00663ae68d92eecf26bca2
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Thu Jan 20 18:07:47 2022 +0000
+
+    Added README and requirements.txt files
+
+commit a04f61b37705415eba426ed2d7f3517c4137503a
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Thu Jan 20 17:53:03 2022 +0000
+
+    Added both the reports to reports folder
+
+commit dc837e8810a647d766661463e944b83afba39d16
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Thu Jan 20 17:46:27 2022 +0000
+
+    Code refactoring done...
+
+commit 21d38e07db4215b8ac208554f1d9502a9d76d19d
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Thu Jan 20 00:24:50 2022 +0000
+
+    added model description in the notebook
+
+commit 1c1b0b16233d76ebcd49ca127218c55a3b611f17
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Wed Jan 19 09:33:48 2022 +0000
+
+    changed folder structure a bit
+
+commit 940c9e26757776893b0e790120be80181e2fb193
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Fri Dec 31 15:51:12 2021 +0000
+
+    built random forest with gabor, sobel and pixel value as features.
+
+commit 52c3080c0d4b1f75b0e45d7bd4c13066345c9592
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Thu Dec 30 22:11:35 2021 +0000
+
+    Using 6000 data points to save some processing time
+
+commit c550bdedf6198ed55afd3d9983f26f01b3338854
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Wed Dec 29 22:55:37 2021 +0000
+
+    Feature engg for image classification using ML
+
+commit 963ed4ce1bfa1fa34cdb542fbb531171714ddb76
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Wed Dec 29 00:23:36 2021 +0000
+
+    testing 2 different methodology of modelling
+
+commit 338dbbcf010c42361511d0fb65c0485212a5ba75
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Tue Dec 28 23:50:44 2021 +0000
+
+    minor changes
+    
+    
+    Former-commit-id: 5c14328b5ebf5d857c0cc4685fee793b98570a1f
+
+commit e422b21595a0f53ef32229d855ec3a0afab2f3c4
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Tue Dec 28 23:04:44 2021 +0000
+
+    Created two models, from scratch and using transfer learning vgg16
+    
+    
+    Former-commit-id: 1221e9fa19fe9e6410a2e9b3e92b54794e0c7c94
+
+commit d47874ffdb64c30f500250b76c3ac0e58ab373ad
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Sun Dec 26 13:44:24 2021 +0000
+
+    splitting data into test train based on drivers
+    
+    
+    Former-commit-id: 11614350a6764af6a580f4038369c26927cf4be6
+
+commit 69a4395b678bb37ea9931178255c5fbd3c70a084
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Thu Dec 9 16:30:20 2021 +0000
+
+    fine tuning the model
+
+commit 6ab3cf037d015c599e5cbf2b9c09537e532b92d2
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Thu Dec 9 09:17:46 2021 +0000
+
+    Making predictions
+
+commit 10fe2b4b04875591b9f03868c7c1fb41502913bf
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Wed Dec 8 23:33:57 2021 +0000
+
+    Creaed a cnn model for image classification
+
+commit 417a18dafd56191ccbb1310bb77ea029be98f7b5
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Tue Dec 7 19:33:01 2021 +0000
+
+    imported several packages
+
+commit e72ee4e285797f90653043a800f2cd4033aa3b42
+Author: roshan-pandey <roshanpandey330@gmail.com>
+Date:   Mon Dec 6 18:28:24 2021 +0000
+
+    initial commit

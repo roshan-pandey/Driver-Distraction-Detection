@@ -22,7 +22,6 @@ from sklearn import preprocessing
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.applications.vgg16 import VGG16
-from keras.applications.inception_v3 import InceptionV3
 from tensorflow.keras.layers import Dense,Input,Conv2D, Dropout, Flatten, BatchNormalization, Dropout, GlobalAveragePooling2D, MaxPooling2D
 from tensorflow.keras.models import Model
 from keras.callbacks import Callback, ModelCheckpoint
@@ -201,7 +200,7 @@ with open('./data/y_test.txt', 'wb') as f:
          pickle.dump(y_test_subset, f)
 
 #############################################################################################################################################################################################################
-####################################################################################### CNN FROM sCRATCH (VGG16 ARCHITECTURE) ###############################################################################
+####################################################################################### CNN FROM SCRATCH (VGG16 ARCHITECTURE) ###############################################################################
 #############################################################################################################################################################################################################
 
 df = pd.read_csv("data/driver_imgs_path.csv") # importing csv file that contains subject id, classname and img name...
