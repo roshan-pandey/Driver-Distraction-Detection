@@ -24,10 +24,9 @@ from tensorflow.keras.optimizers.schedules import ExponentialDecay
 from sklearn.ensemble import RandomForestClassifier
 
 
-tf.keras.backend.clear_session()
 
 #############################################################################################################################################################################################################
-df = pd.read_csv("data/raw_data/driver_imgs_path.csv")
+df = pd.read_csv("data/driver_imgs_path.csv")
 
 # Reading and Processing image... 
 def img_process(df):
@@ -148,6 +147,12 @@ RF_model.fit(X_train_RF, y_train)
 
 #############################################################################################################################################################################################################
 
+tf.keras.backend.clear_session()
+
+
+cnn_test = df[df['subject'].isin(test_pid)]
+cnn_train = df[~df['subject'].isin(test_pid)]
+
 INPUT_SIZE = [224, 224]
 BATCH_SIZE = 32
 
@@ -157,28 +162,24 @@ model1 = Sequential()
 model1.add(Conv2D(32, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(32, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
-model1.add(Dropout(0.25))
 model1.add(Conv2D(64, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(64, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
-model1.add(Dropout(0.25))
 model1.add(Conv2D(128, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(128, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(128, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
-model1.add(Dropout(0.1))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
-model1.add(Dropout(0.25))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(Conv2D(256, kernel_size=(3, 3),activation='relu',input_shape=(224,224,3),padding = 'same'))
 model1.add(MaxPooling2D(pool_size=(2, 2)))
 model1.add(Flatten())
-model1.add(Dense(64, activation = 'elu'))
-model1.add(Dense(64, activation='elu'))
+model1.add(Dense(1000, activation = 'relu'))
+model1.add(Dense(1000, activation='relu'))
 model1.add(Dense(10, activation='softmax'))
 opt = Adam(learning_rate = 0.001)
 model1.compile(loss='categorical_crossentropy', optimizer = opt, metrics=['accuracy'])
@@ -186,37 +187,50 @@ model1.compile(loss='categorical_crossentropy', optimizer = opt, metrics=['accur
 
 # Source: https://keras.io/api/preprocessing/image/
 
-train_gen = ImageDataGenerator(
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    vertical_flip=True,
-    )
 
-train_generator = train_gen.flow(
-    X_train,
-    y_train_cat,
-    batch_size=BATCH_SIZE
+datagen=ImageDataGenerator(rescale=1./255.,
+    height_shift_range=0.3,
+    width_shift_range = 0.3,
+    rotation_range=30,
+    shear_range=0.3,
+    zoom_range=0.3,
+    validation_split=0.25)
+
+train_generator=datagen.flow_from_dataframe(
+    dataframe=cnn_train,
+    directory="./data/imgs/train",
+    x_col="full_path",
+    y_col="classname",
+    subset="training",
+    batch_size=32,
+    seed=42,
+    shuffle=True,
+    class_mode="categorical",
+    target_size=(224, 224)
 )
 
-test_datagen=ImageDataGenerator(rescale=1./255.)
-
-test_generator=test_datagen.flow(
-  X_test,
-  batch_size=32,
-  seed=42,
-  shuffle=False
+valid_generator=datagen.flow_from_dataframe(
+    dataframe=cnn_train,
+    directory="./data/imgs/train",
+    x_col="full_path",
+    y_col="classname",
+    subset="validation",
+    batch_size=32,
+    seed=42,
+    shuffle=True,
+    class_mode="categorical",
+    target_size=(224,224)
 )
 
 checkpoint1 = ModelCheckpoint(filepath="./models/model1/model1.h5", verbose=2, save_best_only=True)
-early_stop = EarlyStopping(monitor="accuracy", min_delta=0, patience=2)
+early_stop = EarlyStopping(monitor="accuracy", min_delta=0, patience=5)
 callbacks1 = [checkpoint1, early_stop]
 model1_trained = model1.fit(
     train_generator, 
-    steps_per_epoch = len(X_train) / BATCH_SIZE, 
+    steps_per_epoch =  train_generator.n/ BATCH_SIZE, 
     callbacks=callbacks1,
-    epochs = 25, 
-    validation_data = (X_test, y_test_cat))
+    epochs = 10, 
+    validation_data = valid_generator)
 
 
 fig, axes = plt.subplots(1, 2, figsize = (10, 5))
@@ -256,7 +270,7 @@ train_gen = ImageDataGenerator(
     rotation_range=30,
     shear_range=0.3,
     zoom_range=0.3
-    )
+)
 
 train_generator = train_gen.flow(
     X_train,
@@ -270,9 +284,8 @@ callbacks2 = [early_stop, checkpoint2]
 input = Input(name = 'img_input', shape=(224, 224, 3))
 vgg16_model = VGG16(input_tensor = input, include_top=False, weights="imagenet")
 
-# for layer in vgg16_model.layers:
-#   layer.trainable = False
-# vgg16_model.summary()
+for layer in vgg16_model.layers:
+  layer.trainable = False
 
 input_layer = vgg16_model(input)
 
@@ -287,6 +300,7 @@ drop2 = Dropout(0.2)(bn)
 d3 = Dense(units=512,activation='relu', kernel_initializer=tf.keras.initializers.he_normal())(drop2)
 Out2 = Dense(units=10,activation='softmax', kernel_initializer=tf.keras.initializers.he_normal())(d3)
 model2=tf.keras.Model(input, Out2)
+
 
 sgd = SGD(learning_rate=0.001)
 model2.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['accuracy'])
